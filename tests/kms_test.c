@@ -17,12 +17,18 @@
 #define PLAINTEXT_DATA_BASE64 "SGVsbG8="
 #define CIPHERTEXT_BLOB_DATA "Hello"
 #define CIPHERTEXT_BLOB_BASE64 "SGVsbG8="
+#define MESSAGE_DATA "Hello"
+#define MESSAGE_BASE64 "SGVsbG8="
+#define SIGNATURE_DATA "Hello"
+#define SIGNATURE_BASE64 "SGVsbG8="
 #define TOKEN_FIRST "TokenFirst"
 #define TOKEN_SECOND "TokenSecond"
 #define ENCRYPTION_CONTEXT_KEY "EncryptionContextKey"
 #define ENCRYPTION_CONTEXT_VALUE "EncryptionContextValue"
 #define SUFIX "Sufix"
 #define KEA_RSAES_OAEP_SHA_256 "RSAES_OAEP_SHA_256"
+#define SIGNING_ALGORITHM "RSASSA_PKCS1_V1_5_SHA_256"
+#define MESSAGE_TYPE "RAW"
 #define KS_AES_256 "AES_256"
 
 AWS_TEST_CASE(test_kms_decrypt_request_cipher_to_json, s_test_kms_decrypt_request_cipher_to_json)
