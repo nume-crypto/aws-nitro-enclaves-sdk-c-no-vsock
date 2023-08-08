@@ -2985,6 +2985,192 @@ clean_up:
     return NULL;
 }
 
+struct aws_kms_get_public_key_request *aws_kms_get_public_key_request_new(struct aws_allocator *allocator) {
+    if (allocator == NULL) {
+        allocator = aws_nitro_enclaves_get_allocator();
+    }
+
+    AWS_PRECONDITION(aws_allocator_is_valid(allocator));
+    
+    struct aws_kms_get_public_key_request *request = aws_mem_calloc(allocator, 1, sizeof(struct aws_kms_get_public_key_request));
+    if (request == NULL) {
+        return NULL;
+    }
+
+    /* Ensure allocator constness for customer usage. Utilize the @ref aws_string pattern. */
+    *(struct aws_allocator **)(&request->allocator) = allocator;
+    
+    return request;
+}
+
+struct aws_string *aws_kms_get_public_key_request_to_json(const struct aws_kms_get_public_key_request *req) {
+    AWS_PRECONDITION(req);
+    AWS_PRECONDITION(aws_allocator_is_valid(req->allocator));
+
+    struct json_object *obj = json_object_new_object();
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    /* Required parameters. */
+    if (req->key_id == NULL) {
+        goto clean_up;
+    }
+    if (s_string_to_json(obj, KMS_KEY_ID, aws_string_c_str(req->key_id)) != AWS_OP_SUCCESS) {
+        goto clean_up;
+    }
+
+    struct aws_string *json = s_aws_string_from_json(req->allocator, obj);
+    if (json == NULL) {
+        goto clean_up;
+    }
+
+    json_object_put(obj);
+
+    return json;
+
+clean_up:
+    json_object_put(obj);
+
+    return NULL;
+}
+
+struct aws_kms_get_public_key_response *aws_kms_get_public_key_response_from_json(
+    struct aws_allocator *allocator,
+    const struct aws_string *json) {
+
+    if (allocator == NULL) {
+        allocator = aws_nitro_enclaves_get_allocator();
+    }
+
+    AWS_PRECONDITION(aws_allocator_is_valid(allocator));
+    AWS_PRECONDITION(aws_string_is_valid(json));
+
+    struct json_object *obj = s_json_object_from_string(json);
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    struct aws_kms_get_public_key_response *response = aws_kms_get_public_key_response_new(allocator);
+    if (response == NULL) {
+        json_object_put(obj);
+        return NULL;
+    }
+
+    struct json_object_iterator it_end = json_object_iter_end(obj);
+    for (struct json_object_iterator it = json_object_iter_begin(obj); !json_object_iter_equal(&it, &it_end);
+         json_object_iter_next(&it)) {
+        const char *key = json_object_iter_peek_name(&it);
+        struct json_object *value = json_object_iter_peek_value(&it);
+        int value_type = json_object_get_type(value);
+
+        if (value_type != json_type_string) {
+            goto clean_up;
+        }
+
+        if (AWS_SAFE_COMPARE(key, KMS_PUBLIC_KEY)) {
+            response->public_key = s_aws_string_from_json(allocator, value);
+            if (response->public_key == NULL) {
+                goto clean_up;
+            }
+            continue;
+        }
+
+        // ... additional key handling based on your specific structure ...
+    }
+
+    // Validate required parameters (if any)
+    if (!aws_string_is_valid(response->public_key)) {
+        goto clean_up;
+    }
+
+    json_object_put(obj);
+
+    return response;
+
+clean_up:
+    json_object_put(obj);
+    aws_kms_get_public_key_response_destroy(response);
+
+    return NULL;
+}
+
+void aws_kms_get_public_key_request_destroy(struct aws_kms_get_public_key_request *req) {
+    if (req == NULL) {
+        return;
+    }
+    AWS_PRECONDITION(req);
+    AWS_PRECONDITION(aws_allocator_is_valid(req->allocator));
+
+    // Destroy the key_id string if it's valid.
+    if (aws_string_is_valid(req->key_id)) {
+        aws_string_destroy(req->key_id);
+    }
+
+    // Cleanup the grant_tokens array list.
+/*     if (aws_array_list_is_valid(&req->grant_tokens)) {
+        for (size_t i = 0; i < aws_array_list_length(&req->grant_tokens); i++) {
+            struct aws_string *elem = NULL;
+            AWS_FATAL_ASSERT(aws_array_list_get_at(&req->grant_tokens, &elem, i) == AWS_OP_SUCCESS);
+
+            aws_string_destroy(elem);
+        }
+
+        aws_array_list_clean_up(&req->grant_tokens);
+    } */
+
+    // Release the memory associated with the request object.
+    aws_mem_release(req->allocator, req);
+}
+
+void aws_kms_get_public_key_response_destroy(struct aws_kms_get_public_key_response *res) {
+    if (res == NULL) {
+        return;
+    }
+    AWS_PRECONDITION(res);
+    AWS_PRECONDITION(aws_allocator_is_valid(res->allocator));
+
+    // Destroy the key_id string if it's valid.
+    if (aws_string_is_valid(res->key_id)) {
+        aws_string_destroy(res->key_id);
+    }
+
+    // Destroy the customer_master_key_spec string if it's valid.
+    if (aws_string_is_valid(res->customer_master_key_spec)) {
+        aws_string_destroy(res->customer_master_key_spec);
+    }
+
+    // Destroy the key_spec string if it's valid.
+    if (aws_string_is_valid(res->key_spec)) {
+        aws_string_destroy(res->key_spec);
+    }
+
+    // Destroy the key_usage string if it's valid.
+    if (aws_string_is_valid(res->key_usage)) {
+        aws_string_destroy(res->key_usage);
+    }
+
+    // Cleanup the public_key byte buffer if it's valid.
+    if (aws_byte_buf_is_valid(&res->public_key)) {
+        aws_byte_buf_clean_up_secure(&res->public_key);
+    }
+
+    // Cleanup the encryption_algorithms array list if it's valid.
+    if (aws_array_list_is_valid(&res->encryption_algorithms)) {
+        aws_array_list_clean_up(&res->encryption_algorithms);
+    }
+
+    // Cleanup the signing_algorithms array list if it's valid.
+    if (aws_array_list_is_valid(&res->signing_algorithms)) {
+        aws_array_list_clean_up(&res->signing_algorithms);
+    }
+
+    // Release the memory associated with the response object.
+    aws_mem_release(res->allocator, res);
+}
+
+
+
 AWS_STATIC_STRING_FROM_LITERAL(s_kms_string, "kms");
 
 struct aws_nitro_enclaves_kms_client_configuration *aws_nitro_enclaves_kms_client_config_default(
@@ -3180,6 +3366,7 @@ static struct aws_byte_cursor kms_target_generate_data_key =
 static struct aws_byte_cursor kms_target_generate_random =
     AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("TrentService.GenerateRandom");
 static struct aws_byte_cursor kms_target_sign = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("TrentService.Sign");
+static struct aws_byte_cursor kms_target_get_public_key = AWS_BYTE_CUR_INIT_FROM_STRING_LITERAL("TrentService.GetPublicKey");
 
 int aws_kms_decrypt_blocking(
     struct aws_nitro_enclaves_kms_client *client,
@@ -3493,6 +3680,9 @@ int aws_kms_sign_blocking(
         goto err_clean;
     }
 
+    const char *json_str = json_object_to_json_string(request);
+    printf("SIGN JSON string: %s\n", json_str);
+
     rc = s_aws_nitro_enclaves_kms_client_call_blocking(client, kms_target_sign, request, &response);
     if (rc != 200) {
         fprintf(stderr, "Got non-200 answer from KMS: %d\n", rc);
@@ -3521,6 +3711,65 @@ int aws_kms_sign_blocking(
 err_clean:
     aws_kms_sign_request_destroy(request_structure);
     aws_kms_sign_response_destroy(response_structure);
+    aws_string_destroy(request);
+    aws_string_destroy(response);
+    return AWS_OP_ERR;
+}
+
+int aws_kms_get_public_key_blocking(
+    struct aws_nitro_enclaves_kms_client *client,
+    const struct aws_string *key_id,
+    struct aws_byte_buf *public_key /* TODO: Add other output fields if needed */) {
+    AWS_PRECONDITION(client != NULL);
+    AWS_PRECONDITION(key_id != NULL);
+    AWS_PRECONDITION(public_key != NULL);
+
+    struct aws_string *response = NULL;
+    struct aws_string *request = NULL;
+    struct aws_kms_get_public_key_response *response_structure = NULL;
+    struct aws_kms_get_public_key_request *request_structure = NULL;
+    int rc = 0;
+
+    request_structure = aws_kms_get_public_key_request_new(client->allocator);
+    if (request_structure == NULL) {
+        return AWS_OP_ERR;
+    }
+
+    request_structure->key_id = aws_string_clone_or_reuse(client->allocator, key_id);
+
+    request = aws_kms_get_public_key_request_to_json(request_structure);
+    if (request == NULL) {
+        goto err_clean;
+    }
+    const char *json_str = json_object_to_json_string(request);
+    printf("GetPublicKey JSON string: %s\n", json_str);
+
+    // TODO: Add proper target for GetPublicKey
+    rc = s_aws_nitro_enclaves_kms_client_call_blocking(client, kms_target_get_public_key, request, &response);
+    if (rc != 200) {
+        fprintf(stderr, "Got non-200 answer from KMS: %d\n", rc);
+        goto err_clean;
+    }
+	
+    response_structure = aws_kms_get_public_key_response_from_json(client->allocator, response);
+    if (response_structure == NULL) {
+        fprintf(stderr, "Could not read response from KMS: %d\n", rc);
+        goto err_clean;
+    }
+	
+	aws_byte_buf_init_copy(public_key, client->allocator, &response_structure->public_key);
+
+    rc = AWS_OP_SUCCESS;
+    aws_kms_get_public_key_request_destroy(request_structure);
+    aws_kms_get_public_key_response_destroy(response_structure);
+    aws_string_destroy(request);
+    aws_string_destroy(response);
+
+    return rc;
+
+err_clean:
+    aws_kms_get_public_key_request_destroy(request_structure);
+    aws_kms_get_public_key_response_destroy(response_structure);
     aws_string_destroy(request);
     aws_string_destroy(response);
     return AWS_OP_ERR;

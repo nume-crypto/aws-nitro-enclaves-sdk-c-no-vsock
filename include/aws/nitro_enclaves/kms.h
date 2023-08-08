@@ -594,6 +594,91 @@ struct aws_kms_sign_response {
     struct aws_allocator *const allocator;
 };
 
+struct aws_kms_get_public_key_request {
+    /**
+     * Identifies the CMK from which to retrieve the public key.
+     *
+     * Required: Yes.
+     */
+    struct aws_string *key_id;
+
+    /**
+     * A list of grant tokens.
+     *
+     * For more information, see
+     * <a href="https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#grant_token">Grant Tokens</a>
+     * in the AWS Key Management Service Developer Guide.
+     *
+     * Required: No.
+     */
+    struct aws_array_list grant_tokens;
+
+    /**
+     * Allocator used for memory management of associated resources.
+     *
+     * Note that this is not part of the request.
+     */
+    struct aws_allocator *const allocator;
+};
+
+struct aws_kms_get_public_key_response {
+    /**
+     * The Amazon Resource Name (ARN) of the CMK from which the public key was retrieved.
+     *
+     * Required: Yes.
+     */
+    struct aws_string *key_id;
+
+    /**
+     * The type of key material in the public key, such as RSA or ECC.
+     *
+     * Required: No.
+     */
+    struct aws_string *customer_master_key_spec;
+
+    /**
+     * The encryption algorithms that the key supports.
+     *
+     * Required: No.
+     */
+    struct aws_array_list encryption_algorithms;
+
+    /**
+     * The identifier of the key.
+     *
+     * Required: Yes.
+     */
+    struct aws_string *key_spec;
+
+    /**
+     * The intended use of the key.
+     *
+     * Required: No.
+     */
+    struct aws_string *key_usage;
+
+    /**
+     * The public key, in DER-encoded X.509 format.
+     *
+     * Required: Yes.
+     */
+    struct aws_byte_buf public_key;
+
+    /**
+     * The signing algorithms that the key supports.
+     *
+     * Required: No.
+     */
+    struct aws_array_list signing_algorithms;
+
+    /**
+     * Allocator used for memory management of associated resources.
+     *
+     * Note that this is not part of the response.
+     */
+    struct aws_allocator *const allocator;
+};
+
 /**
  * The KMS client configuration.
  */
