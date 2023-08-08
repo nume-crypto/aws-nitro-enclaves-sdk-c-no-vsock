@@ -3035,6 +3035,87 @@ clean_up:
     return NULL;
 }
 
+struct aws_kms_get_public_key_response *aws_kms_get_public_key_response_new(struct aws_allocator *allocator) {
+    if (allocator == NULL) {
+        allocator = aws_nitro_enclaves_get_allocator();
+    }
+
+    AWS_PRECONDITION(aws_allocator_is_valid(allocator));
+
+    struct aws_kms_get_public_key_response *response = aws_mem_calloc(allocator, 1, sizeof(struct aws_kms_get_public_key_response));
+    if (response == NULL) {
+        return NULL;
+    }
+
+    /* Initialize the array lists for encryption and signing algorithms */
+    if (aws_array_list_init_dynamic(&response->encryption_algorithms, allocator, 0, sizeof(struct aws_string *)) != AWS_OP_SUCCESS) {
+        aws_mem_release(allocator, response);
+        return NULL;
+    }
+
+    if (aws_array_list_init_dynamic(&response->signing_algorithms, allocator, 0, sizeof(struct aws_string *)) != AWS_OP_SUCCESS) {
+        aws_array_list_clean_up(&response->encryption_algorithms);
+        aws_mem_release(allocator, response);
+        return NULL;
+    }
+
+    /* Ensure allocator constness for customer usage. Utilize the @ref aws_string pattern. */
+    *(struct aws_allocator **)(&response->allocator) = allocator;
+
+    return response;
+}
+
+struct aws_string *aws_kms_get_public_key_response_to_json(const struct aws_kms_get_public_key_response *res) {
+    AWS_PRECONDITION(res);
+    AWS_PRECONDITION(aws_allocator_is_valid(res->allocator));
+    AWS_PRECONDITION(aws_string_is_valid(res->key_id));
+
+    struct json_object *obj = json_object_new_object();
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    /* Required parameters */
+    if (s_string_to_json(obj, "KeyId", aws_string_c_str(res->key_id)) != AWS_OP_SUCCESS) {
+        goto clean_up;
+    }
+    if (s_aws_byte_buf_to_base64_json(res->allocator, obj, "PublicKey", &res->public_key) != AWS_OP_SUCCESS) {
+        goto clean_up;
+    }
+
+    /* Optional parameters */
+    if (res->customer_master_key_spec) {
+        if (s_string_to_json(obj, "CustomerMasterKeySpec", aws_string_c_str(res->customer_master_key_spec)) != AWS_OP_SUCCESS) {
+            goto clean_up;
+        }
+    }
+
+    if (res->key_spec) {
+        if (s_string_to_json(obj, "KeySpec", aws_string_c_str(res->key_spec)) != AWS_OP_SUCCESS) {
+            goto clean_up;
+        }
+    }
+
+    if (res->key_usage) {
+        if (s_string_to_json(obj, "KeyUsage", aws_string_c_str(res->key_usage)) != AWS_OP_SUCCESS) {
+            goto clean_up;
+        }
+    }
+
+    struct aws_string *json = s_aws_string_from_json(res->allocator, obj);
+    if (json == NULL) {
+        goto clean_up;
+    }
+
+    json_object_put(obj);
+    return json;
+
+clean_up:
+    json_object_put(obj);
+    return NULL;
+}
+
+
 struct aws_kms_get_public_key_response *aws_kms_get_public_key_response_from_json(
     struct aws_allocator *allocator,
     const struct aws_string *json) {

@@ -1334,6 +1334,30 @@ int aws_kms_generate_random_blocking(
     uint32_t number_of_bytes,
     struct aws_byte_buf *plaintext /* TODO: err_reason */);
 
+
+AWS_NITRO_ENCLAVES_API
+struct aws_kms_get_public_key_request *aws_kms_get_public_key_request_new(struct aws_allocator *allocator);
+
+AWS_NITRO_ENCLAVES_API
+void aws_kms_get_public_key_request_destroy(struct aws_kms_get_public_key_request *req);
+
+AWS_NITRO_ENCLAVES_API
+struct aws_kms_get_public_key_response *aws_kms_get_public_key_response_new(struct aws_allocator *allocator);
+
+AWS_NITRO_ENCLAVES_API
+void aws_kms_get_public_key_response_destroy(struct aws_kms_get_public_key_response *res);
+
+AWS_NITRO_ENCLAVES_API
+struct aws_string *aws_kms_generate_data_key_request_to_json(const struct aws_kms_generate_data_key_request *req);
+
+AWS_NITRO_ENCLAVES_API
+struct aws_string *aws_kms_get_public_key_response_to_json(const struct aws_kms_get_public_key_response *res);
+
+AWS_NITRO_ENCLAVES_API
+struct aws_kms_get_public_key_response *aws_kms_get_public_key_response_from_json(
+    struct aws_allocator *allocator,
+    const struct aws_string *json);
+
 AWS_NITRO_ENCLAVES_API
 int aws_kms_sign_blocking(
     struct aws_nitro_enclaves_kms_client *client,
@@ -1342,6 +1366,13 @@ int aws_kms_sign_blocking(
     const struct aws_byte_buf *message,
     enum aws_message_type message_type,
     struct aws_byte_buf *signature /* TODO: err_reason */);
+
+AWS_NITRO_ENCLAVES_API
+int aws_kms_get_public_key_blocking(
+    struct aws_nitro_enclaves_kms_client *client,
+    const struct aws_string *key_id,
+    struct aws_byte_buf *public_key /* TODO: Add other output fields if needed */);
+
 
 AWS_EXTERN_C_END
 
